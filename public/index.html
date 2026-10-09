@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asisten AI — Chatbot</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="min-h-screen bg-slate-950 font-sans antialiased">
+    <!-- Dekorasi latar -->
+    <div class="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
+        <div class="absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-indigo-600/30 blur-3xl"></div>
+        <div class="absolute -bottom-40 -left-24 h-96 w-96 rounded-full bg-violet-600/20 blur-3xl"></div>
+        <div class="absolute -bottom-40 -right-24 h-96 w-96 rounded-full bg-sky-500/10 blur-3xl"></div>
+    </div>
+
+    <main class="relative mx-auto flex min-h-screen w-full max-w-2xl flex-col px-3 py-5 sm:px-4 sm:py-8">
+        <div id="chat-container" class="flex h-[86vh] flex-col overflow-hidden rounded-3xl border border-white/10 bg-white shadow-2xl shadow-black/40">
+            <!-- Header -->
+            <div class="flex items-center gap-3 bg-gradient-to-r from-indigo-600 via-indigo-600 to-violet-600 px-5 py-4 text-white">
+                <div class="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-2xl backdrop-blur">
+                    🤖
+                    <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-indigo-600 bg-emerald-400"></span>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <h1 class="truncate text-base font-semibold leading-tight">Asisten AI</h1>
+                    <p class="flex items-center gap-1.5 text-xs text-indigo-100">
+                        <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-300"></span>
+                        Online · siap membantu
+                    </p>
+                </div>
+                <div class="hidden shrink-0 rounded-full bg-white/15 px-3 py-1.5 text-[11px] font-medium tracking-wide backdrop-blur sm:block">✦ AI CHAT</div>
+            </div>
+
+            <!-- Area pesan -->
+            <div id="messages" class="chat-scroll flex-1 space-y-4 overflow-y-auto bg-slate-50 px-4 py-6 sm:px-6"></div>
+
+            <!-- Indikator mengetik -->
+            <div id="typing" hidden class="bg-slate-50 px-4 pb-2 sm:px-6">
+                <div class="flex items-start gap-2">
+                    <div class="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-xs text-white shadow">✦</div>
+                    <div class="flex items-center gap-1.5 rounded-2xl rounded-tl-md border border-slate-200/70 bg-white px-4 py-3.5 shadow-sm">
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot" style="animation-delay:.15s"></span>
+                        <span class="typing-dot" style="animation-delay:.3s"></span>
+                        <span class="ml-1 text-xs italic text-slate-400">Bot sedang mengetik...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input -->
+            <div class="border-t border-slate-100 bg-white px-4 py-4 sm:px-6">
+                <!-- Preview lampiran gambar -->
+                <!-- Visibilitas via inline style (bukan atribut `hidden`), karena
+                     class Tailwind `flex` menimpa `display:none` dari atribut hidden. -->
+                <div id="attach-preview" style="display:none" class="mb-2 flex items-center gap-2 rounded-2xl border border-slate-200/80 bg-slate-50 p-2 pr-3">
+                    <div class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white">
+                        <img id="attach-thumb" alt="Lampiran gambar" class="h-full w-full object-cover"
+                            onerror="window.__attachThumbFailed && window.__attachThumbFailed()">
+                    </div>
+                    <span id="attach-info" class="min-w-0 flex-1 truncate text-xs text-slate-600"></span>
+                    <button id="attach-cancel" type="button" class="shrink-0 rounded-full border border-slate-200 px-2.5 py-1 text-xs text-slate-500 hover:bg-slate-50">Batal</button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="file" id="image-input" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+                    <button id="attach-button" type="button" title="Lampirkan gambar (JPG/PNG/WEBP/GIF, maks 4 MB)"
+                        class="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-lg text-slate-500 transition hover:bg-slate-100 disabled:opacity-50">📎</button>
+                    <input type="text" id="message-input" placeholder="Ketik pesanmu... (coba: /gambar kucing astronot)" autocomplete="off"
+                        class="flex-1 rounded-full border border-slate-200 bg-slate-50 px-5 py-3 text-[15px] text-slate-800 placeholder-slate-400 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100 disabled:opacity-50">
+                    <button id="send-button" type="button"
+                        class="flex shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-indigo-500 to-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:shadow-xl hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none sm:px-5">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4">
+                            <path d="M3.478 2.405a.75.75 0 0 0-.926.94l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.368A60.517 60.517 0 0 0 3.478 2.405Z" />
+                        </svg>
+                        <span class="hidden sm:inline">Kirim</span>
+                    </button>
+                </div>
+                <p class="mt-2.5 text-center text-[11px] text-slate-400">Tekan <kbd>Enter</kbd> untuk mengirim · <kbd>/gambar ...</kbd> untuk membuat · 📎 + <kbd>/edit ...</kbd> untuk edit gambar · ditenagai puter.js</p>
+            </div>
+        </div>
+
+        <p class="mt-4 text-center text-xs text-slate-500">Chatbot AI · realtime via Socket.IO</p>
+    </main>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
